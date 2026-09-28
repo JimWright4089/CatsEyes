@@ -1,0 +1,12 @@
+
+#ifndef VERSIONS_HPP
+#define VERSIONS_HPP
+
+#include "neoPixels.hpp"
+
+#define APP_VERSION_MAJOR 14000000
+#define APP_VERSION_MINOR 1
+
+#define BOARD_COLOR CYAN
+
+#endif
