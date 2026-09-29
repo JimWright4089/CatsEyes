@@ -9,6 +9,8 @@
 //     This is the code for coneecting to things with a userid and password
 //
 //----------------------------------------------------------------------------
+#include <Arduino_JSON.h>
+#include "mqtt.hpp"
 #include "settings.hpp"
 #include "memory.h"
 #include "EEPROM.h"
@@ -35,6 +37,7 @@ uint8_t lEepromBlock[SIZE_OF_FLASH];
 uint8_t lSsid[SIZE_OF_STRING];
 uint8_t lPassword[SIZE_OF_STRING];
 uint8_t lIp4[SIZE_OF_IP4_ADDRESS];
+uint8_t lLedState = STATE_RUN;
 
 void initSettings()
 {
@@ -118,4 +121,81 @@ uint8_t* getSsid()
 uint8_t* getPassword()
 {
   return lPassword;
+}
+
+uint8_t getState()
+{
+  return lLedState;
+}
+
+void setSetting(char* message)
+{
+  JSONVar myObject = JSON.parse(message);
+
+  // JSON.typeof(jsonVar) can be used to get the type of the variable
+  if (JSON.typeof(myObject) == "undefined") 
+  {
+    sendError("parseerror",message);
+    return;
+  }
+
+  if (myObject.hasOwnProperty("cmd")) 
+  {
+    Serial.print("myObject[\"cmd\"] = ");
+    Serial.println((const char*) myObject["cmd"]);
+
+    String cmd = (String)myObject["cmd"];
+
+    if(true == cmd.equals("set"))
+    {
+      if ((myObject.hasOwnProperty("field")) && (myObject.hasOwnProperty("data")))
+      {
+        Serial.print("myObject[\"field\"] = ");
+        Serial.println((const char*) myObject["field"]);
+        setField((String) myObject["field"], myObject["data"]);
+      }
+      else
+      {
+        sendError("nosetfielddata",message);
+      }
+    }
+    else
+    {
+      sendError("unknowncmd",message);
+    }
+  }
+  else
+  {
+    sendError("nocmd",message);
+  }
+}
+
+void setField(String field, JSONVar data)
+{
+  if(true == field.equals("state"))
+  {
+    setState((String)data);
+    return;
+  }
+  sendError("badfield",(char*)field.c_str());
+}
+
+void setState(String state)
+{
+  if(true == state.equals("off"))
+  {
+    lLedState = STATE_OFF;  
+    return;
+  }
+  if(true == state.equals("run"))
+  {
+    lLedState = STATE_RUN;  
+    return;
+  }
+  if(true == state.equals("test"))
+  {
+    lLedState = STATE_TEST;  
+    return;
+  }
+  sendError("badstate",(char*)state.c_str());
 }

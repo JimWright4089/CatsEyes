@@ -9,6 +9,7 @@
 void runEyes();
 void runTestEyes();
 uint32_t getEyeColor();
+void clearEyes();
 
 int gEyeState[NUM_OF_EYES];
 uint32_t gEyeColor[NUM_OF_EYES];
@@ -16,11 +17,10 @@ bool gHasBlinked[NUM_OF_EYES];
 StopWatch blinkWatch[NUM_OF_EYES];
 uint32_t gEyeStatcount[NUM_OF_EYES];
 uint32_t gEyeStatCountFromOpen[NUM_OF_EYES];
+uint8_t gLastState=STATE_RUN;
 
 StopWatch eyesWork;
 StopWatch eyesTest;
-
-uint8_t gLedState = STATE_TEST;
 
 void setup() 
 {
@@ -46,15 +46,7 @@ void setup()
   otaInit();
   mqttInit();
 
-  for(int i=0;i<NUM_OF_EYES;i++)
-  {
-    gEyeState[i] = EYE_CLOSED;
-    gEyeColor[i] = BLACK;
-    gHasBlinked[i] = false;
-    gEyeStatcount[i] = 0;
-    gEyeStatCountFromOpen[i] = 0;
-    setEyeColor(i, gEyeColor[i]);
-  }
+  clearEyes();
   showEyes();
   eyesTest.set_time(10000);
 }
@@ -65,11 +57,16 @@ void loop()
   mqttRun();
   if(true == eyesWork.is_expired())
   {
-    if(STATE_RUN == gLedState)
+    if(STATE_RUN == getState())
     {
+      if(STATE_RUN != gLastState)
+      {
+        clearEyes();
+      }
       runEyes();
     }
-    if(STATE_TEST == gLedState)
+
+    if(STATE_TEST == getState())
     {
       if(true == eyesTest.is_expired())
       {
@@ -78,6 +75,12 @@ void loop()
       }
     }
 
+    if(STATE_OFF == getState())
+    {
+      clearEyes();
+    }
+
+    gLastState=getState();
     showEyes();
     eyesWork.reset();
   }
@@ -257,5 +260,18 @@ void runTestEyes()
     gEyeColor[i] = color;
     setEyeColor(i, gEyeColor[i]);
     reportEyeChange(i, gEyeColor[i], EYE_TEST, gEyeStatcount[i],gEyeStatCountFromOpen[i]);
+  }
+}
+
+void clearEyes()
+{
+  for(int i=0;i<NUM_OF_EYES;i++)
+  {
+    gEyeState[i] = EYE_CLOSED;
+    gEyeColor[i] = BLACK;
+    gHasBlinked[i] = false;
+    gEyeStatcount[i] = 0;
+    gEyeStatCountFromOpen[i] = 0;
+    setEyeColor(i, gEyeColor[i]);
   }
 }

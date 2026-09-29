@@ -6,27 +6,29 @@
 #include "mqtt.hpp"
 #include "stopWatch.hpp"
 #include "neoPixels.hpp"
+#include "settings.hpp"
+#include "versions.hpp"
 
 void sendPing();
-
+void onMqttMessage(int messageSize);
 
 StopWatch pollWatch(500);
 StopWatch pingWatch(60000);
+StopWatch fullStatus(300000);
 
 const char broker[] = "192.168.143.40";
 int        port     = 1883;
-const char topic[]  = "arduino/simple";
 
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 bool mqttConnected=false;
 
-//{ "cmd": "ping", "value":6325}
-
 const char healthTopic[] = "cats-eyes/health";
 const char eyeChaangeTopic[] = "cats-eyes/status";
+const char commandTopic[] = "cats-eyes/command";
 int count=0;
 int gPingCount = 0;
+char lMqttBuffer[MAX_MQTT_PACKET];
 
 void mqttInit()
 {
@@ -47,7 +49,23 @@ void mqttInit()
   {
     Serial.println("You're connected to the MQTT broker!");
     Serial.println();
+    mqttClient.onMessage(onMqttMessage);
+    mqttClient.subscribe(commandTopic);
   }
+
+  mqttClient.beginMessage(healthTopic);
+  mqttClient.print("{ \"cmd\": \"start\"");
+  mqttClient.endMessage();
+
+  mqttClient.beginMessage(healthTopic);
+  mqttClient.print("{ \"cmd\": \"version\", \"data\": \"");
+  mqttClient.print(APP_VERSION_MAJOR);
+  mqttClient.print(".");
+  mqttClient.print(APP_VERSION_MINOR);
+  mqttClient.print("\"}");
+  mqttClient.endMessage();
+
+
   sendPing();
 }
 
@@ -93,7 +111,7 @@ void reportEyeChange(uint8_t number, uint32_t color, uint8_t state, uint32_t las
   mqttClient.print("}");
   mqttClient.endMessage();
 
-  log_i("number=%d color=%s state=%s lastStateTime=%d timeFromOpen=%d",number,getColorName(color),getStateName(state),lastCount,sinceOpen);
+  log_d("number=%d color=%s state=%s lastStateTime=%d timeFromOpen=%d",number,getColorName(color),getStateName(state),lastCount,sinceOpen);
 }
 
 void sendPing()
@@ -112,3 +130,41 @@ void sendPing()
   pingWatch.reset();
   gPingCount++;
 }
+
+void onMqttMessage(int messageSize) 
+{
+  // we received a message, print out the topic and contents
+  String topic = mqttClient.messageTopic();
+  log_d("Received:%s len:%d",topic.c_str(),messageSize);
+
+  // use the Stream interface to print the contents
+  uint16_t loc = 0;
+  while (mqttClient.available()) 
+  {
+    lMqttBuffer[loc] = (char)mqttClient.read();
+    loc++;
+  }
+  lMqttBuffer[loc] = 0x00;
+
+  if(true == topic.equals(commandTopic))
+  {
+    log_i("Received:%s",lMqttBuffer);
+    setSetting(lMqttBuffer);
+  }
+  else
+  {
+    log_w("Received messaage with topic:%s",topic.c_str());
+  }
+}
+
+void sendError(char* command, char *message)
+{
+  mqttClient.beginMessage(healthTopic);
+  mqttClient.print("{ \"error\": \"");
+  mqttClient.print(command);
+  mqttClient.print("\", \"data\": \"");
+  mqttClient.print(message);
+  mqttClient.print("\"}");
+  mqttClient.endMessage();
+}
+
