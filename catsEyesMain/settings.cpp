@@ -21,22 +21,22 @@ const uint16_t SIZE_OF_FLASH = 1024;
 const uint16_t SIZE_OF_STRING = 128;
 const uint16_t SIZE_OF_CRC16  =   2;
 const uint16_t SIZE_OF_DATA_FLASH = SIZE_OF_FLASH - SIZE_OF_CRC16;
-const uint16_t SIZE_OF_IP4_ADDRESS = 4;
+const uint16_t SIZE_OF_BROKER_ADDRESS = 16;
 const uint16_t SIZE_OF_CRC = 2;
 
 const uint16_t LOC_SSID = 0;
 const uint16_t LOC_PASSWORD = LOC_SSID + SIZE_OF_STRING;
-const uint16_t LOC_IP4_ADDRESS_OF_MQTT = LOC_PASSWORD + SIZE_OF_STRING;
+const uint16_t LOC_BROKER_ADDRESS_OF_MQTT = LOC_PASSWORD + SIZE_OF_STRING;
 
-const uint8_t* DEFAULT_SSID = (const uint8_t*)"provisioner";
-const uint8_t* DEFAULT_PASSWORD = (const uint8_t*)"provisioner-pwd";
-const uint8_t* DEFAULT_IP4 = (const uint8_t*)"prov";
+const char* DEFAULT_SSID = "provisioner";
+const char* DEFAULT_PASSWORD = "provisioner-pwd";
+const char* DEFAULT_IP4 = "192.168.10.10";
 bool lEepromGood=false;
 uint8_t lEepromBlock[SIZE_OF_FLASH];
 
-uint8_t lSsid[SIZE_OF_STRING];
-uint8_t lPassword[SIZE_OF_STRING];
-uint8_t lIp4[SIZE_OF_IP4_ADDRESS];
+char lSsid[SIZE_OF_STRING];
+char lPassword[SIZE_OF_STRING];
+char lBroker[SIZE_OF_BROKER_ADDRESS];
 uint8_t lLedState = STATE_RUN;
 
 void initSettings()
@@ -64,44 +64,57 @@ void initSettings()
     {
       log_e("Error in the CRC Re-initing");
       log_e("Calc'd CRC=%x, read CRC=%x",calcedCrc,readCrc);
-      memset(lEepromBlock,0x00,SIZE_OF_FLASH);
-
-      setSsid((uint8_t*)DEFAULT_SSID);
-      setPassword((uint8_t*)DEFAULT_PASSWORD);
-      setIp4((uint8_t*)DEFAULT_IP4);
-      commitEeprom();
+      clearSettings();
     }
     else
     {
       memcpy(lSsid,&lEepromBlock[LOC_SSID],SIZE_OF_STRING);
       memcpy(lPassword,&lEepromBlock[LOC_PASSWORD],SIZE_OF_STRING);
-      memcpy(lIp4,&lEepromBlock[LOC_IP4_ADDRESS_OF_MQTT],SIZE_OF_IP4_ADDRESS);
+      memcpy(lBroker,&lEepromBlock[LOC_BROKER_ADDRESS_OF_MQTT],SIZE_OF_BROKER_ADDRESS);
     }
   }
 
   log_i("SSID:    [%s]",lSsid);
   log_i("Password:[%s]",lPassword);
+  log_i("Broker:  [%s]",lBroker);
 }
 
-void setSsid(uint8_t* ssid)
+void clearSettings()
+{
+  log_w("Clearing Settings");
+  memset(lEepromBlock,0x00,SIZE_OF_FLASH);
+  setSsid((char*)DEFAULT_SSID);
+  setPassword((char*)DEFAULT_PASSWORD);
+  setBroker((char*)DEFAULT_IP4);
+  commitEeprom();
+}
+
+void dumpSettings()
+{
+  sendSettings("ssid",lSsid);
+  sendSettings("password",lPassword);
+  sendSettings("broker",lBroker);
+}
+
+void setSsid(char* ssid)
 {
   log_i("Set SSID");
   memcpy(lSsid,ssid,SIZE_OF_STRING);
   memcpy(&lEepromBlock[LOC_SSID],ssid,SIZE_OF_STRING);
 }
 
-void setPassword(uint8_t* password)
+void setPassword(char* password)
 {
   log_i("Set Password");
   memcpy(lPassword,password,SIZE_OF_STRING);
   memcpy(&lEepromBlock[LOC_PASSWORD],password,SIZE_OF_STRING);
 }
 
-void setIp4(uint8_t* ip4)
+void setBroker(char* broker)
 {
-  log_i("Set IP4");
-  memcpy(lIp4,ip4,SIZE_OF_IP4_ADDRESS);
-  memcpy(&lEepromBlock[LOC_IP4_ADDRESS_OF_MQTT],ip4,SIZE_OF_IP4_ADDRESS);
+  log_i("Set Broker");
+  memcpy(lBroker,broker,SIZE_OF_BROKER_ADDRESS);
+  memcpy(&lEepromBlock[LOC_BROKER_ADDRESS_OF_MQTT],broker,SIZE_OF_BROKER_ADDRESS);
 }
 
 void commitEeprom()
@@ -109,16 +122,16 @@ void commitEeprom()
   log_i("commit to EERPOM");
   uint16_t calcedCrc = calcCRC16(lEepromBlock, SIZE_OF_DATA_FLASH);
   memcpy(&lEepromBlock[SIZE_OF_DATA_FLASH],&calcedCrc,SIZE_OF_CRC);
-  uint16_t length = EEPROM.writeBytes(0, lEepromBlock, SIZE_OF_FLASH);
+  EEPROM.writeBytes(0, lEepromBlock, SIZE_OF_FLASH);
   EEPROM.commit();
 }
 
-uint8_t* getSsid()
+char* getSsid()
 {
   return lSsid;
 }
 
-uint8_t* getPassword()
+char* getPassword()
 {
   return lPassword;
 }
@@ -126,6 +139,11 @@ uint8_t* getPassword()
 uint8_t getState()
 {
   return lLedState;
+}
+
+char* getBroker()
+{
+  return lBroker;
 }
 
 void setSetting(char* message)
@@ -158,16 +176,32 @@ void setSetting(char* message)
       {
         sendError("nosetfielddata",message);
       }
+      return;
     }
-    else
+
+    if(true == cmd.equals("reboot"))
     {
-      sendError("unknowncmd",message);
+      ESP.restart();
+      return;
     }
+
+    if(true == cmd.equals("clearsettings"))
+    {
+      clearSettings();
+      return;
+    }
+
+    if(true == cmd.equals("dumpsettings"))
+    {
+      dumpSettings();
+      return;
+    }
+
+    sendError("unknowncmd",message);
+    return;
   }
-  else
-  {
-    sendError("nocmd",message);
-  }
+  sendError("nocmd",message);
+
 }
 
 void setField(String field, JSONVar data)
@@ -177,6 +211,29 @@ void setField(String field, JSONVar data)
     setState((String)data);
     return;
   }
+
+  if(true == field.equals("ssid"))
+  {
+    setSsid((char*)((String)data).c_str());
+    commitEeprom();
+    return;
+  }
+
+  if(true == field.equals("password"))
+  {
+    setPassword((char*)((String)data).c_str());
+    commitEeprom();
+    return;
+  }
+
+  if(true == field.equals("broker"))
+  {
+    setBroker((char*)((String)data).c_str());
+    commitEeprom();
+    return;
+  }
+
+  
   sendError("badfield",(char*)field.c_str());
 }
 

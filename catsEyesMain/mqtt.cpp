@@ -16,7 +16,6 @@ StopWatch pollWatch(500);
 StopWatch pingWatch(60000);
 StopWatch fullStatus(300000);
 
-const char broker[] = "192.168.143.40";
 int        port     = 1883;
 
 WiFiClient wifiClient;
@@ -26,6 +25,7 @@ bool mqttConnected=false;
 const char healthTopic[] = "cats-eyes/health";
 const char eyeChaangeTopic[] = "cats-eyes/status";
 const char commandTopic[] = "cats-eyes/command";
+const char settingsTopic[] = "cats-eyes/settings";
 int count=0;
 int gPingCount = 0;
 char lMqttBuffer[MAX_MQTT_PACKET];
@@ -34,9 +34,9 @@ void mqttInit()
 {
   mqttClient.setId("clientId");
   Serial.print("Attempting to connect to the MQTT broker: ");
-  Serial.println(broker);
+  Serial.println(getBroker());
 
-  if (!mqttClient.connect(broker, port)) {
+  if (!mqttClient.connect(getBroker(), port)) {
     Serial.print("MQTT connection failed! Error code = ");
     Serial.println(mqttClient.connectError());
   }
@@ -168,3 +168,13 @@ void sendError(char* command, char *message)
   mqttClient.endMessage();
 }
 
+void sendSettings(char* setting, char *value)
+{
+  mqttClient.beginMessage(settingsTopic);
+  mqttClient.print("{ \"setting\": \"");
+  mqttClient.print(setting);
+  mqttClient.print("\", \"value\": \"");
+  mqttClient.print(value);
+  mqttClient.print("\"}");
+  mqttClient.endMessage();
+}
