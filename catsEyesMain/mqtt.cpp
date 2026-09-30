@@ -178,3 +178,25 @@ void sendSettings(char* setting, char *value)
   mqttClient.print("\"}");
   mqttClient.endMessage();
 }
+
+void sendSettings(char* setting, uint16_t value)
+{
+  mqttClient.beginMessage(settingsTopic);
+  mqttClient.print("{ \"setting\": \"");
+  mqttClient.print(setting);
+  mqttClient.print("\", \"value\": \"");
+  mqttClient.print(value);
+  mqttClient.print("\"}");
+  mqttClient.endMessage();
+}
+
+void sendSettings(char* setting, uint32_t value)
+{
+  mqttClient.beginMessage(settingsTopic);
+  mqttClient.print("{ \"setting\": \"");
+  mqttClient.print(setting);
+  mqttClient.print("\", \"value\": \"");
+  mqttClient.print(value);
+  mqttClient.print("\"}");
+  mqttClient.endMessage();
+}

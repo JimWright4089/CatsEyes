@@ -13,17 +13,26 @@ void initSettings();
 
 void clearSettings();
 void dumpSettings();
-void setSsid(char* ssid);
-void setPassword(char* password);
-void setBroker(char* ip4);
 void commitEeprom();
-uint8_t getState();
-void setState(String state);
-char* getSsid();
-char* getPassword();
-char* getBroker();
-
 void setSetting(char* message);
 void setField(String field, JSONVar data);
+
+void setState(String state);
+uint8_t getState();
+void setSsid(char* ssid);
+char* getSsid();
+void setPassword(char* password);
+char* getPassword();
+void setBroker(char* ip4);
+char* getBroker();
+
+void setEyeOpenCount(uint16_t count);
+uint16_t getEyeOpenCount();
+void setEyeCloseCount(uint16_t count);
+uint16_t getEyeCloseCount();
+void setEyeBlinkCount(uint16_t count);
+uint16_t getEyeBlinkCount();
+void setEyeBlinkLockoutTime(uint32_t time);
+uint32_t getEyeBlinkLockoutTime();
 
 #endif

@@ -141,7 +141,6 @@ void runEyes()
       gHasBlinked[i] = false;
     }
 
-
     //---------------------------------------------------------------
     //
     //  Should I open the eye?
@@ -149,7 +148,7 @@ void runEyes()
     //---------------------------------------------------------------
     if(EYE_CLOSED == gEyeState[i])
     {
-      if(0 == random(0, 50))
+      if(0 == random(0, getEyeOpenCount()))
       {
         gEyeState[i] = EYE_OPEN;
         gHasBlinked[i] = false;
@@ -169,7 +168,7 @@ void runEyes()
       //---------------------------------------------------------------
       if(EYE_OPEN == gEyeState[i])
       {
-        if(0 == random(0, 100))
+        if(0 == random(0, getEyeCloseCount()))
         {
           gEyeState[i] = EYE_CLOSED;
           gEyeColor[i] = BLACK;
@@ -186,7 +185,7 @@ void runEyes()
           //---------------------------------------------------------------
           if(false == gHasBlinked[i])
           {
-            if(0 == random(0, 50))
+            if(0 == random(0, getEyeBlinkCount()))
             {
               gEyeState[i] = EYE_BLINK;
               setEyeColor(i, BLACK);
@@ -214,7 +213,7 @@ void runEyes()
             gHasBlinked[i] = true;
             reportEyeChange(i, gEyeColor[i], EYE_BLINK_OFF, gEyeStatcount[i],gEyeStatCountFromOpen[i]);
             gEyeStatcount[i] = 0;
-            blinkWatch[i].set_time(70000);
+            blinkWatch[i].set_time(getEyeBlinkLockoutTime());
             blinkWatch[i].reset();
           }
         }
