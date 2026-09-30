@@ -1,16 +1,19 @@
 //----------------------------------------------------------------------------
 //
-//  Workfile: neoPixels.h
+//  Workfile: neoPixels.hpp
 //
-//  Copyright: 
+//  Copyright: Jim Wright 2026
 //
 //  Notes:
-//     This is the class for handling both the neopixel eyes, and neopixel on the board
+//     Declaration of NeoPixel helpers for the board and eye arrays.
 //
 //----------------------------------------------------------------------------
 #ifndef NEO_PIXEL_H
 #define NEO_PIXEL_H
 
+//----------------------------------------------------------------------------
+//  Includes
+//----------------------------------------------------------------------------
 #include <Adafruit_NeoPixel.h>
 
 #define BLACK   0x00000000

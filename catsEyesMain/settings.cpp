@@ -1,13 +1,16 @@
 //----------------------------------------------------------------------------
 //
-//  $Workfile: Settings.hpp
+//  Workfile: settings.cpp
 //
-//  Copywrite:
-//      
+//  Copyright: Jim Wright 2026
 //
 //  Notes:
-//     This is the code for coneecting to things with a userid and password
+//     EEPROM, configuration, and MQTT setting management code.
 //
+//----------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------
+//  Includes
 //----------------------------------------------------------------------------
 #include <Arduino_JSON.h>
 #include "mqtt.hpp"
@@ -54,6 +57,13 @@ uint16_t lEyeCloseCount       = 100;
 uint16_t lEyeBlinkCount       = 50;
 uint32_t lEyeBlinkLockoutTime = 20000;
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Read settings from EEPROM and restore the active configuration.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void initSettings()
 {
   delay(1);
@@ -104,6 +114,13 @@ void initSettings()
   log_i("blinktime: [%d]",lEyeBlinkLockoutTime);
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Reset all settings to the default values and write them to EEPROM.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void clearSettings()
 {
   log_w("Clearing Settings");
@@ -122,6 +139,13 @@ void clearSettings()
   commitEeprom();
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Publish the current settings to the MQTT settings topic.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void dumpSettings()
 {
   sendSettings("ssid",lSsid);
@@ -134,6 +158,13 @@ void dumpSettings()
   sendSettings("blinktime",lEyeBlinkLockoutTime);
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Write the in-memory EEPROM buffer to flash and commit the CRC.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void commitEeprom()
 {
   log_i("commit to EERPOM");
@@ -143,6 +174,13 @@ void commitEeprom()
   EEPROM.commit();
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Parse an incoming MQTT command and apply the requested setting update.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void setSetting(char* message)
 {
   JSONVar myObject = JSON.parse(message);
@@ -201,6 +239,13 @@ void setSetting(char* message)
 
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Apply a single field update from a parsed MQTT command payload.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void setField(String field, JSONVar data)
 {
   if(true == field.equals("state"))
@@ -266,6 +311,13 @@ void setField(String field, JSONVar data)
 //  
 //-------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Set the device operating state to off, run, or test.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void setState(String state)
 {
   if(true == state.equals("off"))
@@ -286,11 +338,25 @@ void setState(String state)
   sendError("badstate",(char*)state.c_str());
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return the current operating state of the device.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 uint8_t getState()
 {
   return lLedState;
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Store the SSID value in memory and EEPROM buffer.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void setSsid(char* ssid)
 {
   log_i("Set SSID");
@@ -298,11 +364,25 @@ void setSsid(char* ssid)
   memcpy(&lEepromBlock[LOC_SSID],ssid,SIZE_OF_STRING);
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return the currently configured SSID.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 char* getSsid()
 {
   return lSsid;
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Store the Wi-Fi password in memory and EEPROM buffer.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void setPassword(char* password)
 {
   log_i("Set Password");
@@ -310,11 +390,25 @@ void setPassword(char* password)
   memcpy(&lEepromBlock[LOC_PASSWORD],password,SIZE_OF_STRING);
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return the currently configured Wi-Fi password.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 char* getPassword()
 {
   return lPassword;
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Store the MQTT broker address in memory and EEPROM buffer.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void setBroker(char* broker)
 {
   log_i("Set Broker");
@@ -322,11 +416,25 @@ void setBroker(char* broker)
   memcpy(&lEepromBlock[LOC_BROKER_ADDRESS_OF_MQTT],broker,SIZE_OF_BROKER_ADDRESS);
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return the currently configured MQTT broker address.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 char* getBroker()
 {
   return lBroker;
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Store the eye-open timing value in memory and EEPROM buffer.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void setEyeOpenCount(uint16_t count)
 {
   log_i("Set Eye Open");
@@ -334,11 +442,25 @@ void setEyeOpenCount(uint16_t count)
   memcpy(&lEepromBlock[LOC_EYE_OPEN],&lEyeOpenCount,SIZE_OF_COUNT);
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return the configured eye-open timing value.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 uint16_t getEyeOpenCount()
 {
   return lEyeOpenCount;
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Store the eye-close timing value in memory and EEPROM buffer.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void setEyeCloseCount(uint16_t count)
 {
   log_i("Set Eye Close");
@@ -346,11 +468,25 @@ void setEyeCloseCount(uint16_t count)
   memcpy(&lEepromBlock[LOC_EYE_CLOSE],&lEyeCloseCount,SIZE_OF_COUNT);
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return the configured eye-close timing value.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 uint16_t getEyeCloseCount()
 {
   return lEyeCloseCount;
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Store the eye-blink timing value in memory and EEPROM buffer.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void setEyeBlinkCount(uint16_t count)
 {
   log_i("Set Eye Blink");
@@ -358,11 +494,25 @@ void setEyeBlinkCount(uint16_t count)
   memcpy(&lEepromBlock[LOC_EYE_BLINK],&lEyeBlinkCount,SIZE_OF_COUNT);
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return the configured blink timing value.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 uint16_t getEyeBlinkCount()
 {
   return lEyeBlinkCount;
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Store the blink lockout time in memory and EEPROM buffer.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void setEyeBlinkLockoutTime(uint32_t count)
 {
   log_i("Set Eye Blink Time");
@@ -370,6 +520,13 @@ void setEyeBlinkLockoutTime(uint32_t count)
   memcpy(&lEepromBlock[LOC_EYE_BLINK_TIME],&lEyeBlinkLockoutTime,SIZE_OF_TIME);
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return the configured blink lockout time.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 uint32_t getEyeBlinkLockoutTime()
 {
   return lEyeBlinkLockoutTime;

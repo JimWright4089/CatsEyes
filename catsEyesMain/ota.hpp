@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------------
 //
-//  Workfile: ota.h
+//  Workfile: ota.hpp
 //
-//  Copyright: 
+//  Copyright: Jim Wright 2026
 //
 //  Notes:
-//     This is the class for handling both the neopixel eyes, and neopixel on the board
+//     OTA Wi-Fi and firmware update interface definitions.
 //
 //----------------------------------------------------------------------------
 #ifndef OTA_H

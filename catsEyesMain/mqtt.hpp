@@ -1,7 +1,19 @@
-
+//----------------------------------------------------------------------------
+//
+//  Workfile: mqtt.hpp
+//
+//  Copyright: Jim Wright 2026
+//
+//  Notes:
+//     MQTT public interface declarations and message helper prototypes.
+//
+//----------------------------------------------------------------------------
 #ifndef MQTT_HPP
 #define MQTT_HPP
 
+//----------------------------------------------------------------------------
+//  Includes
+//----------------------------------------------------------------------------
 #include "stdint.h"
 
 const uint16_t MAX_MQTT_PACKET = 400;

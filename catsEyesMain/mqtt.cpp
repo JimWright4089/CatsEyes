@@ -1,4 +1,17 @@
+//----------------------------------------------------------------------------
+//
+//  Workfile: mqtt.cpp
+//
+//  Copyright: Jim Wright 2026
+//
+//  Notes:
+//     All of the MQTT handling code 
+//
+//----------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------
+//  Includes
+//----------------------------------------------------------------------------
 #include <Arduino.h>
 #include <WiFi.h>
 #include <ArduinoMqttClient.h>
@@ -30,6 +43,13 @@ int count=0;
 int gPingCount = 0;
 char lMqttBuffer[MAX_MQTT_PACKET];
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Initialize the MQTT client and connect to the configured broker.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void mqttInit()
 {
   mqttClient.setId("clientId");
@@ -70,6 +90,13 @@ void mqttInit()
 }
 
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Poll the MQTT client and send periodic keepalive messages.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void mqttRun()
 {
   if(false == mqttConnected)
@@ -90,6 +117,13 @@ void mqttRun()
   }
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Publish the current eye state change to the MQTT status topic.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void reportEyeChange(uint8_t number, uint32_t color, uint8_t state, uint32_t lastCount, uint32_t sinceOpen)
 {
   if(false == mqttConnected)
@@ -114,6 +148,13 @@ void reportEyeChange(uint8_t number, uint32_t color, uint8_t state, uint32_t las
   log_d("number=%d color=%s state=%s lastStateTime=%d timeFromOpen=%d",number,getColorName(color),getStateName(state),lastCount,sinceOpen);
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Send a health ping message to the MQTT broker.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void sendPing()
 {
   if(false == mqttConnected)
@@ -131,6 +172,13 @@ void sendPing()
   gPingCount++;
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Handle an incoming MQTT message and dispatch the command payload.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void onMqttMessage(int messageSize) 
 {
   // we received a message, print out the topic and contents
@@ -157,6 +205,13 @@ void onMqttMessage(int messageSize)
   }
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Send an MQTT error payload describing the failed command.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void sendError(char* command, char *message)
 {
   mqttClient.beginMessage(healthTopic);
@@ -168,6 +223,13 @@ void sendError(char* command, char *message)
   mqttClient.endMessage();
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Send a string setting update over MQTT.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void sendSettings(char* setting, char *value)
 {
   mqttClient.beginMessage(settingsTopic);
@@ -179,6 +241,13 @@ void sendSettings(char* setting, char *value)
   mqttClient.endMessage();
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Send a 16-bit setting update over MQTT.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void sendSettings(char* setting, uint16_t value)
 {
   mqttClient.beginMessage(settingsTopic);
@@ -190,6 +259,13 @@ void sendSettings(char* setting, uint16_t value)
   mqttClient.endMessage();
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Send a 32-bit setting update over MQTT.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void sendSettings(char* setting, uint32_t value)
 {
   mqttClient.beginMessage(settingsTopic);

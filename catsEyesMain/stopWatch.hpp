@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------------
 //
-//  Workfile: stopWatch.h
+//  Workfile: stopWatch.hpp
 //
-//  Copyright: 
+//  Copyright: Jim Wright 2026
 //
 //  Notes:
-//     This is the class for handling stop watches
+//     Timing helper class used for watchdog and debounce-style delays.
 //
 //----------------------------------------------------------------------------
 #ifndef STOP_WATCH_H

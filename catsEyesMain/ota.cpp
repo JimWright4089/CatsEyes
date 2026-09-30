@@ -1,4 +1,17 @@
+//----------------------------------------------------------------------------
+//
+//  Workfile: ota.cpp
+//
+//  Copyright: Jim Wright 2026
+//
+//  Notes:
+//     OTA update and Wi-Fi connection implementation.
+//
+//----------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------
+//  Includes
+//----------------------------------------------------------------------------
 #include <Arduino.h>
 #include <WiFi.h>
 #include <ESPmDNS.h>
@@ -9,6 +22,13 @@
 
 uint32_t lLastOtaTime = 0;
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Connect the device to the configured Wi-Fi network.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void wifiInit(void)
 {
   WiFi.mode(WIFI_STA);
@@ -25,6 +45,13 @@ void wifiInit(void)
   Serial.println(WiFi.localIP());
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Initialize the Arduino OTA update handler and callbacks.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void otaInit(void)
 {
   // Port defaults to 3232
@@ -74,6 +101,13 @@ void otaInit(void)
   ArduinoOTA.begin();
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Process OTA updates while the application is running.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void otaRun(void) 
 {
   ArduinoOTA.handle();

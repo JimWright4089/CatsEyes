@@ -2,10 +2,10 @@
 //
 //  Workfile: stopWatch.cpp
 //
-//  Copyright: 
+//  Copyright: Jim Wright 2026
 //
 //  Notes:
-//     This is the class for handling stop watches
+//     Timing helper implementation for delay and expiration checks.
 //
 //----------------------------------------------------------------------------
 

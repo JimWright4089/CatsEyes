@@ -1,4 +1,17 @@
+//----------------------------------------------------------------------------
+//
+//  Workfile: catsEyesMain.ino
+//
+//  Copyright: Jim Wright 2026
+//
+//  Notes:
+//     Main application entry point and controller logic for the Cats Eyes device.
+//
+//----------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------
+//  Includes
+//----------------------------------------------------------------------------
 #include "settings.hpp"
 #include "versions.hpp"
 #include "neoPixels.hpp"
@@ -22,6 +35,13 @@ uint8_t gLastState=STATE_RUN;
 StopWatch eyesWork;
 StopWatch eyesTest;
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Initialize the device, sensors, and network services.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void setup() 
 {
   randomSeed(analogRead(A0));
@@ -51,6 +71,13 @@ void setup()
   eyesTest.set_time(10000);
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Run the main control loop for OTA, MQTT, and eye behavior.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void loop() 
 {
   otaRun();
@@ -86,6 +113,13 @@ void loop()
   }
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return a random eye color from the configured palette.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 uint32_t getEyeColor()
 {
   uint8_t color = random(0, 100);
@@ -124,6 +158,13 @@ uint32_t getEyeColor()
 
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Update the state of each eye according to open, close, and blink rules.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void runEyes()
 {
   for(int i=0;i<NUM_OF_EYES;i++)
@@ -222,6 +263,13 @@ void runEyes()
   }
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Run the test sequence that cycles through the eye colors.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void runTestEyes()
 {
   uint32_t color = BLACK;
@@ -262,6 +310,13 @@ void runTestEyes()
   }
 }
 
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Clear all eye state and reset the display to the off condition.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 void clearEyes()
 {
   for(int i=0;i<NUM_OF_EYES;i++)
