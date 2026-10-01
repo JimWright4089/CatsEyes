@@ -20,6 +20,6 @@
 #define APP_VERSION_MAJOR 14000000
 #define APP_VERSION_MINOR 1
 
-#define BOARD_COLOR CYAN
+#define BOARD_COLOR BLUE
 
 #endif
