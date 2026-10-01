@@ -17,6 +17,8 @@
 #include <Arduino_JSON.h>
 #include "stdint.h"
 
+const uint16_t SIZE_OF_STRING = 128;
+
 const uint8_t STATE_RUN = 1;
 const uint8_t STATE_TEST = 2;
 const uint8_t STATE_OFF = 3;
@@ -37,6 +39,9 @@ void setPassword(char* password);
 char* getPassword();
 void setBroker(char* ip4);
 char* getBroker();
+
+void setID(uint16_t id);
+uint16_t getID();
 
 void setEyeOpenCount(uint16_t count);
 uint16_t getEyeOpenCount();

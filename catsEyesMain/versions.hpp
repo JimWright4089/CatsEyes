@@ -18,8 +18,8 @@
 #include "neoPixels.hpp"
 
 #define APP_VERSION_MAJOR 14000000
-#define APP_VERSION_MINOR 1
+#define APP_VERSION_MINOR 2
 
-#define BOARD_COLOR BLUE
+#define BOARD_COLOR GREEN
 
 #endif

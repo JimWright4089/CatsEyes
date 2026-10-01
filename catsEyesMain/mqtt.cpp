@@ -24,6 +24,7 @@
 
 void sendPing();
 void onMqttMessage(int messageSize);
+void buildTopic(const char* topic,char* builtTopic,int size);
 
 StopWatch pollWatch(500);
 StopWatch pingWatch(60000);
@@ -35,13 +36,15 @@ WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 bool mqttConnected=false;
 
-const char healthTopic[] = "cats-eyes/health";
-const char eyeChaangeTopic[] = "cats-eyes/status";
-const char commandTopic[] = "cats-eyes/command";
-const char settingsTopic[] = "cats-eyes/settings";
+const char healthTopic[] = "cats-eyes/%d/health";
+const char eyeChaangeTopic[] = "cats-eyes/%d/status";
+const char commandTopic[] = "cats-eyes/%d/command";
+const char settingsTopic[] = "cats-eyes/%d/settings";
 int count=0;
 int gPingCount = 0;
 char lMqttBuffer[MAX_MQTT_PACKET];
+char lTopic[SIZE_OF_STRING];
+char lSubTopic[SIZE_OF_STRING];
 
 //----------------------------------------------------------------------------
 //  Purpose:
@@ -70,21 +73,24 @@ void mqttInit()
     Serial.println("You're connected to the MQTT broker!");
     Serial.println();
     mqttClient.onMessage(onMqttMessage);
-    mqttClient.subscribe(commandTopic);
+    buildTopic(commandTopic,lSubTopic,SIZE_OF_STRING);
+    mqttClient.subscribe(lSubTopic);
+    log_i("Listening on %s",lSubTopic);
   }
 
-  mqttClient.beginMessage(healthTopic);
+  buildTopic(healthTopic,lTopic,SIZE_OF_STRING);
+  mqttClient.beginMessage(lTopic);
   mqttClient.print("{ \"cmd\": \"start\"");
   mqttClient.endMessage();
 
-  mqttClient.beginMessage(healthTopic);
+  buildTopic(healthTopic,lTopic,SIZE_OF_STRING);
+  mqttClient.beginMessage(lTopic);
   mqttClient.print("{ \"cmd\": \"version\", \"data\": \"");
   mqttClient.print(APP_VERSION_MAJOR);
   mqttClient.print(".");
   mqttClient.print(APP_VERSION_MINOR);
   mqttClient.print("\"}");
   mqttClient.endMessage();
-
 
   sendPing();
 }
@@ -131,7 +137,8 @@ void reportEyeChange(uint8_t number, uint32_t color, uint8_t state, uint32_t las
     return;
   }
 
-  mqttClient.beginMessage(eyeChaangeTopic);
+  buildTopic(eyeChaangeTopic,lTopic,SIZE_OF_STRING);
+  mqttClient.beginMessage(lTopic);
   mqttClient.print("{ \"number\": ");
   mqttClient.print(number);
   mqttClient.print(", \"color\": \"");
@@ -161,7 +168,8 @@ void sendPing()
   {
     return;
   }
-  mqttClient.beginMessage(healthTopic);
+  buildTopic(healthTopic,lTopic,SIZE_OF_STRING);
+  mqttClient.beginMessage(lTopic);
   mqttClient.print("{ \"cmd\": \"ping\", \"value\":");
   mqttClient.print(gPingCount);
   mqttClient.print("}");
@@ -194,14 +202,14 @@ void onMqttMessage(int messageSize)
   }
   lMqttBuffer[loc] = 0x00;
 
-  if(true == topic.equals(commandTopic))
+  if(true == topic.equals(lSubTopic))
   {
     log_i("Received:%s",lMqttBuffer);
     setSetting(lMqttBuffer);
   }
   else
   {
-    log_w("Received messaage with topic:%s",topic.c_str());
+    log_w("Received messaage with unkown topic:%s",topic.c_str());
   }
 }
 
@@ -214,7 +222,9 @@ void onMqttMessage(int messageSize)
 //----------------------------------------------------------------------------
 void sendError(char* command, char *message)
 {
-  mqttClient.beginMessage(healthTopic);
+  log_e("%s for %s",command,message);
+  buildTopic(healthTopic,lTopic,SIZE_OF_STRING);
+  mqttClient.beginMessage(lTopic);
   mqttClient.print("{ \"error\": \"");
   mqttClient.print(command);
   mqttClient.print("\", \"data\": \"");
@@ -232,7 +242,9 @@ void sendError(char* command, char *message)
 //----------------------------------------------------------------------------
 void sendSettings(char* setting, char *value)
 {
-  mqttClient.beginMessage(settingsTopic);
+  log_w("%s for %d",setting,value);
+  buildTopic(settingsTopic,lTopic,SIZE_OF_STRING);
+  mqttClient.beginMessage(lTopic);
   mqttClient.print("{ \"setting\": \"");
   mqttClient.print(setting);
   mqttClient.print("\", \"value\": \"");
@@ -250,7 +262,9 @@ void sendSettings(char* setting, char *value)
 //----------------------------------------------------------------------------
 void sendSettings(char* setting, uint16_t value)
 {
-  mqttClient.beginMessage(settingsTopic);
+  log_w("%s for %d",setting,value);
+  buildTopic(settingsTopic,lTopic,SIZE_OF_STRING);
+  mqttClient.beginMessage(lTopic);
   mqttClient.print("{ \"setting\": \"");
   mqttClient.print(setting);
   mqttClient.print("\", \"value\": \"");
@@ -268,7 +282,9 @@ void sendSettings(char* setting, uint16_t value)
 //----------------------------------------------------------------------------
 void sendSettings(char* setting, uint32_t value)
 {
-  mqttClient.beginMessage(settingsTopic);
+  log_w("%s for %d",setting,value);
+  buildTopic(settingsTopic,lTopic,SIZE_OF_STRING);
+  mqttClient.beginMessage(lTopic);
   mqttClient.print("{ \"setting\": \"");
   mqttClient.print(setting);
   mqttClient.print("\", \"value\": \"");
@@ -276,3 +292,18 @@ void sendSettings(char* setting, uint32_t value)
   mqttClient.print("\"}");
   mqttClient.endMessage();
 }
+
+
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Builds the topic from the prototype and the device id
+//
+//  Notes:
+//   This uses the local var lTopic;
+//
+//----------------------------------------------------------------------------
+void buildTopic(const char* topic,char* builtTopic,int size)
+{
+  snprintf(builtTopic, size, topic, getID());
+}
+

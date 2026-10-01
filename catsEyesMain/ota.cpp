@@ -21,6 +21,7 @@
 #include "settings.hpp"
 
 uint32_t lLastOtaTime = 0;
+char lName[SIZE_OF_STRING];
 
 //----------------------------------------------------------------------------
 //  Purpose:
@@ -34,7 +35,8 @@ void wifiInit(void)
   WiFi.mode(WIFI_STA);
 
   WiFi.begin((const char*)getSsid(), (const char*)getPassword());
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) 
+  {
     log_e("Connection Failed! Rebooting...");
     delay(5000);
     ESP.restart();
@@ -54,7 +56,9 @@ void wifiInit(void)
 //----------------------------------------------------------------------------
 void otaInit(void)
 {
-  // Port defaults to 3232
+
+  snprintf(lName,SIZE_OF_STRING,"cats-eye-%d",getID());
+  ArduinoOTA.setHostname(lName);
   ArduinoOTA.setPort(3232);
   ArduinoOTA.setPassword("cats=5-eyes");
 

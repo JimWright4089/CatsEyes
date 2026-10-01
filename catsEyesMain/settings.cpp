@@ -21,22 +21,23 @@
 #include "CRC.h"
 
 const uint16_t SIZE_OF_FLASH = 1024;
-const uint16_t SIZE_OF_STRING = 128;
 const uint16_t SIZE_OF_CRC16  =   2;
-const uint16_t SIZE_OF_COUNT  =   2;
+const uint16_t SIZE_OF_SHORT  =   2;
 const uint32_t SIZE_OF_TIME   =   4;
 const uint16_t SIZE_OF_DATA_FLASH = SIZE_OF_FLASH - SIZE_OF_CRC16;
 const uint16_t SIZE_OF_BROKER_ADDRESS = 16;
 const uint16_t SIZE_OF_CRC = 2;
 
-const uint16_t LOC_SSID           = 0;
+const uint16_t LOC_ID             = 0;
+const uint16_t LOC_SSID           = LOC_ID + SIZE_OF_SHORT;
 const uint16_t LOC_PASSWORD       = LOC_SSID + SIZE_OF_STRING;
 const uint16_t LOC_BROKER_ADDRESS_OF_MQTT = LOC_PASSWORD + SIZE_OF_STRING;
 const uint16_t LOC_EYE_OPEN       = LOC_BROKER_ADDRESS_OF_MQTT + SIZE_OF_BROKER_ADDRESS;
-const uint16_t LOC_EYE_CLOSE      = LOC_EYE_OPEN + SIZE_OF_COUNT;
-const uint16_t LOC_EYE_BLINK      = LOC_EYE_CLOSE + SIZE_OF_COUNT;
-const uint16_t LOC_EYE_BLINK_TIME = LOC_EYE_BLINK + SIZE_OF_COUNT;
+const uint16_t LOC_EYE_CLOSE      = LOC_EYE_OPEN + SIZE_OF_SHORT;
+const uint16_t LOC_EYE_BLINK      = LOC_EYE_CLOSE + SIZE_OF_SHORT;
+const uint16_t LOC_EYE_BLINK_TIME = LOC_EYE_BLINK + SIZE_OF_SHORT;
 
+const uint16_t DEFAULT_ID   = 0xFFFF;
 const char* DEFAULT_SSID = "provisioner";
 const char* DEFAULT_PASSWORD = "provisioner-pwd";
 const char* DEFAULT_IP4 = "192.168.10.10";
@@ -45,9 +46,11 @@ const uint16_t DEFAULT_EYE_CLOSE  = 100;
 const uint16_t DEFAULT_EYE_BLINK  = 50;
 const uint32_t DEFAULT_EYE_BLINK_TIME = 20000;
 
+
 bool lEepromGood=false;
 uint8_t lEepromBlock[SIZE_OF_FLASH];
 
+uint16_t lID                  = 0xFFFF;
 char lSsid[SIZE_OF_STRING];
 char lPassword[SIZE_OF_STRING];
 char lBroker[SIZE_OF_BROKER_ADDRESS];
@@ -93,17 +96,20 @@ void initSettings()
     }
     else
     {
+      memcpy(&lID,&lEepromBlock[LOC_ID],SIZE_OF_SHORT);
+
       memcpy(lSsid,&lEepromBlock[LOC_SSID],SIZE_OF_STRING);
       memcpy(lPassword,&lEepromBlock[LOC_PASSWORD],SIZE_OF_STRING);
       memcpy(lBroker,&lEepromBlock[LOC_BROKER_ADDRESS_OF_MQTT],SIZE_OF_BROKER_ADDRESS);
 
-      memcpy(&lEyeOpenCount,&lEepromBlock[LOC_EYE_OPEN],SIZE_OF_COUNT);
-      memcpy(&lEyeCloseCount,&lEepromBlock[LOC_EYE_CLOSE],SIZE_OF_COUNT);
-      memcpy(&lEyeBlinkCount,&lEepromBlock[LOC_EYE_BLINK],SIZE_OF_COUNT);
+      memcpy(&lEyeOpenCount,&lEepromBlock[LOC_EYE_OPEN],SIZE_OF_SHORT);
+      memcpy(&lEyeCloseCount,&lEepromBlock[LOC_EYE_CLOSE],SIZE_OF_SHORT);
+      memcpy(&lEyeBlinkCount,&lEepromBlock[LOC_EYE_BLINK],SIZE_OF_SHORT);
       memcpy(&lEyeBlinkLockoutTime,&lEepromBlock[LOC_EYE_BLINK_TIME],SIZE_OF_TIME);
     }
   }
 
+  log_i("id:        [%d]",lID);
   log_i("ssid:      [%s]",lSsid);
   log_i("password:  [%s]",lPassword);
   log_i("broker:    [%s]",lBroker);
@@ -148,6 +154,7 @@ void clearSettings()
 //----------------------------------------------------------------------------
 void dumpSettings()
 {
+  sendSettings("id",lID);
   sendSettings("ssid",lSsid);
   sendSettings("password",lPassword);
   sendSettings("broker",lBroker);
@@ -254,6 +261,13 @@ void setField(String field, JSONVar data)
     return;
   }
 
+  if(true == field.equals("id"))
+  {
+    setID(((unsigned short)data));
+    commitEeprom();
+    return;
+  }
+
   if(true == field.equals("ssid"))
   {
     setSsid((char*)((String)data).c_str());
@@ -310,6 +324,32 @@ void setField(String field, JSONVar data)
 //   Getter/Setters
 //  
 //-------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Set the cats eye ID
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
+void setID(uint16_t id)
+{
+  log_i("Set ID");
+  lID = id;
+  memcpy(&lEepromBlock[LOC_ID],&lID,SIZE_OF_SHORT);
+}
+
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Get the cats eye ID
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
+uint16_t getID()
+{
+  return lID;
+}
 
 //----------------------------------------------------------------------------
 //  Purpose:
@@ -439,7 +479,7 @@ void setEyeOpenCount(uint16_t count)
 {
   log_i("Set Eye Open");
   lEyeOpenCount = count;
-  memcpy(&lEepromBlock[LOC_EYE_OPEN],&lEyeOpenCount,SIZE_OF_COUNT);
+  memcpy(&lEepromBlock[LOC_EYE_OPEN],&lEyeOpenCount,SIZE_OF_SHORT);
 }
 
 //----------------------------------------------------------------------------
@@ -465,7 +505,7 @@ void setEyeCloseCount(uint16_t count)
 {
   log_i("Set Eye Close");
   lEyeCloseCount = count;
-  memcpy(&lEepromBlock[LOC_EYE_CLOSE],&lEyeCloseCount,SIZE_OF_COUNT);
+  memcpy(&lEepromBlock[LOC_EYE_CLOSE],&lEyeCloseCount,SIZE_OF_SHORT);
 }
 
 //----------------------------------------------------------------------------
@@ -491,7 +531,7 @@ void setEyeBlinkCount(uint16_t count)
 {
   log_i("Set Eye Blink");
   lEyeBlinkCount = count;
-  memcpy(&lEepromBlock[LOC_EYE_BLINK],&lEyeBlinkCount,SIZE_OF_COUNT);
+  memcpy(&lEepromBlock[LOC_EYE_BLINK],&lEyeBlinkCount,SIZE_OF_SHORT);
 }
 
 //----------------------------------------------------------------------------
