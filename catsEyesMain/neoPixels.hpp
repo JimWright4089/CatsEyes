@@ -23,6 +23,7 @@
 #define YELLOW  0x001E1E00
 #define MAGENTA 0x001E001E
 #define CYAN    0x00001E1E
+#define ORANGE  0x001E0700
 #define WHITE   0x001E1E1E
 
 #define NUM_OF_EYES 25
@@ -35,7 +36,6 @@
 
 void initPixels();
 void setBoardPixel(uint32_t color);
-void showBoardPixel();
 void setEyeColor(uint16_t number, uint32_t color);
 void showEyes();
 const char* getColorName(uint32_t color);

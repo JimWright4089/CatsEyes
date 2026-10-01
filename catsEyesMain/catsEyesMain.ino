@@ -34,6 +34,52 @@ uint8_t gLastState=STATE_RUN;
 
 StopWatch eyesWork;
 StopWatch eyesTest;
+StopWatch lWifiSetup(10000);
+
+//----------------------------------------------------------------------------
+//  Purpose:
+//   LED Task
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
+void ledTask(void * pvParameters) 
+{
+  while(true) 
+  {
+    setBoardPixel(BOARD_COLOR);
+    if(true == eyesWork.is_expired())
+    {
+      if(STATE_RUN == getState())
+      {
+        if(STATE_RUN != gLastState)
+        {
+          clearEyes();
+        }
+        runEyes();
+      }
+
+      if(STATE_TEST == getState())
+      {
+        if(true == eyesTest.is_expired())
+        {
+          runTestEyes();
+          eyesTest.reset();
+        }
+      }
+
+      if(STATE_OFF == getState())
+      {
+        clearEyes();
+      }
+
+      gLastState=getState();
+      showEyes();
+      eyesWork.reset();
+    }
+  }
+}
+
 
 //----------------------------------------------------------------------------
 //  Purpose:
@@ -49,7 +95,6 @@ void setup()
   Serial.begin(115200);
   initPixels();
   setBoardPixel(BOARD_COLOR);
-  showBoardPixel();
 
   Serial.println("Starting Cats Eyes");
   Serial.print("Version:");
@@ -61,9 +106,18 @@ void setup()
   log_i("Starting Cats Eyes");
   delay(1000);
 
+  xTaskCreatePinnedToCore(
+      ledTask,   /* Function to implement the task */
+      "LedTask",     /* Name of the task */
+      10000,       /* Stack size in words */
+      NULL,        /* Task input parameter */
+      1,           /* Priority of the task */
+      NULL,        /* Task handle */
+      0            /* Core where the task should run (0 or 1) */
+    );  
+
   initSettings();
   wifiInit();
-  otaInit();
   mqttInit();
 
   clearEyes();
@@ -80,37 +134,24 @@ void setup()
 //----------------------------------------------------------------------------
 void loop() 
 {
+  if(true == lWifiSetup.is_expired())
+  {
+    if(false == isWifiGood())
+    {
+      log_e("Trying to setup WIFI");
+      wifiInit();
+    }
+    if(false == isMqttGood())
+    {
+      log_e("Trying to setup MQTT");
+      mqttInit();
+    }
+    lWifiSetup.set_time(10000);
+    lWifiSetup.reset();
+  }
+
   otaRun();
   mqttRun();
-  if(true == eyesWork.is_expired())
-  {
-    if(STATE_RUN == getState())
-    {
-      if(STATE_RUN != gLastState)
-      {
-        clearEyes();
-      }
-      runEyes();
-    }
-
-    if(STATE_TEST == getState())
-    {
-      if(true == eyesTest.is_expired())
-      {
-        runTestEyes();
-        eyesTest.reset();
-      }
-    }
-
-    if(STATE_OFF == getState())
-    {
-      clearEyes();
-    }
-
-    gLastState=getState();
-    showEyes();
-    eyesWork.reset();
-  }
 }
 
 //----------------------------------------------------------------------------
@@ -124,29 +165,34 @@ uint32_t getEyeColor()
 {
   uint8_t color = random(0, 100);
 
-  if(color < 5)  // 5
+  if(color < 3)  // 5
   {
     return BLUE;
   }
 
-  if(color < 12) // 7
+  if(color < 6) // 7
   {
     return MAGENTA;
   }
 
-  if(color < 24) // 12
+  if(color < 15) // 9
   {
     return CYAN;
   }
 
-  if(color < 39) // 15
+  if(color < 27) // 12
   {
     return GREEN;
   }
 
-  if(color < 56) // 17
+  if(color < 42) // 15
   {
     return YELLOW;
+  }
+
+  if(color < 56) // 17
+  {
+    return ORANGE;
   }
 
   if(color < 76) // 20
@@ -295,6 +341,9 @@ void runTestEyes()
       color=CYAN;
       break;
     case CYAN:
+      color=ORANGE;
+      break;
+    case ORANGE:
       color=WHITE;
       break;
     default:

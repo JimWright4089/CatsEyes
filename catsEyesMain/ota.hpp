@@ -12,7 +12,8 @@
 #define OTA_H
 
 void wifiInit(void);
-void otaInit(void);
 void otaRun(void);
+
+bool isWifiGood();
 
 #endif

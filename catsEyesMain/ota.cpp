@@ -20,8 +20,12 @@
 #include "ota.hpp"
 #include "settings.hpp"
 
+void otaInit(void);
+
 uint32_t lLastOtaTime = 0;
 char lName[SIZE_OF_STRING];
+bool lWifiGood = false;
+bool lOTAGood = false;
 
 //----------------------------------------------------------------------------
 //  Purpose:
@@ -32,19 +36,27 @@ char lName[SIZE_OF_STRING];
 //----------------------------------------------------------------------------
 void wifiInit(void)
 {
+  log_i("Trying to get on WIFI");
   WiFi.mode(WIFI_STA);
+  uint8_t retryCount=0;
 
   WiFi.begin((const char*)getSsid(), (const char*)getPassword());
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) 
+  uint8_t status = WiFi.waitForConnectResult();
+  while (status != WL_CONNECTED) 
   {
-    log_e("Connection Failed! Rebooting...");
-    delay(5000);
-    ESP.restart();
+    retryCount++;
+    if(retryCount > 8)
+    {
+      return;
+    }
+    status = WiFi.waitForConnectResult();
   }
 
+  lWifiGood = true;
   Serial.println("Ready");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
+  otaInit();
 }
 
 //----------------------------------------------------------------------------
@@ -114,5 +126,35 @@ void otaInit(void)
 //----------------------------------------------------------------------------
 void otaRun(void) 
 {
+  if(false == lWifiGood)
+  {
+    return;
+  }
+
   ArduinoOTA.handle();
 }
+
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Get true if the WIFI is on and connected
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
+bool isWifiGood()
+{
+  return lWifiGood;
+}
+
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Get true if the OTF is good
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
+bool isOTAGood()
+{
+
+}
+

@@ -14,6 +14,9 @@
 //----------------------------------------------------------------------------
 #include <Adafruit_NeoPixel.h>
 #include "neoPixels.hpp"
+#include "settings.hpp"
+#include "stopWatch.hpp"
+#include "ota.hpp"
 
 #define BOARD_PIN        9
 #define BOARD_NUM_PIXELS 1
@@ -24,6 +27,8 @@
 
 Adafruit_NeoPixel boardPixel(BOARD_NUM_PIXELS, BOARD_PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel eyePixels(EYE_NUM_PIXELS, EYE_PIN, NEO_GRB + NEO_KHZ800);
+StopWatch boardBlink;
+bool boardOn = true;
 
 //----------------------------------------------------------------------------
 //  Purpose:
@@ -47,19 +52,84 @@ void initPixels()
 //----------------------------------------------------------------------------
 void setBoardPixel(uint32_t color)
 {
-  boardPixel.setPixelColor(0, color);
-}
+  if(false == isWifiGood())
+  {
+    if(true == boardBlink.is_expired())
+    {
+      if(true == boardOn)
+      {
+        boardPixel.setPixelColor(0, RED);
+        boardPixel.show();  
+        boardBlink.set_time(1500);
+        boardBlink.reset();
+        boardOn = false;
+      }
+      else
+      {
+        boardPixel.setPixelColor(0, BLACK);
+        boardPixel.show();  
+        boardBlink.set_time(500);
+        boardBlink.reset();
+        boardOn = true;
+      }
+    }
+    return;
+  }
 
-//----------------------------------------------------------------------------
-//  Purpose:
-//   Refresh the board status pixel on the output bus.
-//
-//  Notes:
-//
-//----------------------------------------------------------------------------
-void showBoardPixel()
-{
-  boardPixel.show();  
+  if(STATE_RUN == getState())
+  {
+    boardPixel.setPixelColor(0, color);
+    boardPixel.show();  
+    return;
+  }
+
+  if(STATE_TEST == getState())
+  {
+    if(true == boardBlink.is_expired())
+    {
+      if(true == boardOn)
+      {
+        boardPixel.setPixelColor(0, color);
+        boardPixel.show();  
+        boardBlink.set_time(1000);
+        boardBlink.reset();
+        boardOn = false;
+      }
+      else
+      {
+        boardPixel.setPixelColor(0, BLACK);
+        boardPixel.show();  
+        boardBlink.set_time(1000);
+        boardBlink.reset();
+        boardOn = true;
+      }
+    }
+    return;
+  }
+
+  if(STATE_OFF == getState())
+  {
+    if(true == boardBlink.is_expired())
+    {
+      if(true == boardOn)
+      {
+        boardPixel.setPixelColor(0, WHITE);
+        boardPixel.show();  
+        boardBlink.set_time(500);
+        boardBlink.reset();
+        boardOn = false;
+      }
+      else
+      {
+        boardPixel.setPixelColor(0, BLACK);
+        boardPixel.show();  
+        boardBlink.set_time(2000);
+        boardBlink.reset();
+        boardOn = true;
+      }
+    }
+    return;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -115,6 +185,8 @@ const char* getColorName(uint32_t color)
       return "magenta";
     case CYAN:
       return "cyan";
+    case ORANGE:
+      return "orange";
     case WHITE:
       return "white";
     default:

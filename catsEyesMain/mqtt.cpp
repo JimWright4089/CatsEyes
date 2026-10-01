@@ -46,6 +46,19 @@ char lMqttBuffer[MAX_MQTT_PACKET];
 char lTopic[SIZE_OF_STRING];
 char lSubTopic[SIZE_OF_STRING];
 
+
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return if the MQTT is good
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
+bool isMqttGood()
+{
+  return mqttConnected;
+}
+
 //----------------------------------------------------------------------------
 //  Purpose:
 //   Initialize the MQTT client and connect to the configured broker.
@@ -59,24 +72,20 @@ void mqttInit()
   Serial.print("Attempting to connect to the MQTT broker: ");
   Serial.println(getBroker());
 
-  if (!mqttClient.connect(getBroker(), port)) {
+  if (!mqttClient.connect(getBroker(), port)) 
+  {
     Serial.print("MQTT connection failed! Error code = ");
     Serial.println(mqttClient.connectError());
-  }
-  else
-  {
-    mqttConnected=true;
+    return;
   }
 
-  if(true==mqttConnected)
-  {
-    Serial.println("You're connected to the MQTT broker!");
-    Serial.println();
-    mqttClient.onMessage(onMqttMessage);
-    buildTopic(commandTopic,lSubTopic,SIZE_OF_STRING);
-    mqttClient.subscribe(lSubTopic);
-    log_i("Listening on %s",lSubTopic);
-  }
+  mqttConnected=true;
+  Serial.println("You're connected to the MQTT broker!");
+  Serial.println();
+  mqttClient.onMessage(onMqttMessage);
+  buildTopic(commandTopic,lSubTopic,SIZE_OF_STRING);
+  mqttClient.subscribe(lSubTopic);
+  log_i("Listening on %s",lSubTopic);
 
   buildTopic(healthTopic,lTopic,SIZE_OF_STRING);
   mqttClient.beginMessage(lTopic);
@@ -132,6 +141,8 @@ void mqttRun()
 //----------------------------------------------------------------------------
 void reportEyeChange(uint8_t number, uint32_t color, uint8_t state, uint32_t lastCount, uint32_t sinceOpen)
 {
+  log_i("number=%d color=%s state=%s lastStateTime=%d timeFromOpen=%d",number,getColorName(color),getStateName(state),lastCount,sinceOpen);
+
   if(false == mqttConnected)
   {
     return;
@@ -152,7 +163,6 @@ void reportEyeChange(uint8_t number, uint32_t color, uint8_t state, uint32_t las
   mqttClient.print("}");
   mqttClient.endMessage();
 
-  log_d("number=%d color=%s state=%s lastStateTime=%d timeFromOpen=%d",number,getColorName(color),getStateName(state),lastCount,sinceOpen);
 }
 
 //----------------------------------------------------------------------------
