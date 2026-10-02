@@ -26,7 +26,7 @@ void sendPing();
 void onMqttMessage(int messageSize);
 void buildTopic(const char* topic,char* builtTopic,int size);
 
-StopWatch pollWatch(500);
+StopWatch pollWatch(250);
 StopWatch pingWatch(60000);
 StopWatch fullStatus(300000);
 
@@ -70,19 +70,14 @@ void mqttInit()
 {
   snprintf(lClientID,SIZE_OF_STRING,"cats-eyes-%d",getID());
   mqttClient.setId(lClientID);
-  Serial.print("Attempting to connect to the MQTT broker: ");
-  Serial.println(getBroker());
 
   if (!mqttClient.connect(getBroker(), port)) 
   {
-    Serial.print("MQTT connection failed! Error code = ");
-    Serial.println(mqttClient.connectError());
     return;
   }
 
   mqttConnected=true;
-  Serial.println("You're connected to the MQTT broker!");
-  Serial.println();
+  log_i("You're connected to the MQTT broker!");
   mqttClient.onMessage(onMqttMessage);
   buildTopic(commandTopic,lSubTopic,SIZE_OF_STRING);
   mqttClient.subscribe(lSubTopic);
@@ -117,7 +112,7 @@ void mqttRun()
 {
   if(false == mqttConnected)
   {
-    return;
+    mqttInit();
   }
 
   if(pollWatch.is_expired())
@@ -163,7 +158,6 @@ void reportEyeChange(uint8_t number, uint32_t color, uint8_t state, uint32_t las
   mqttClient.print(sinceOpen);
   mqttClient.print("}");
   mqttClient.endMessage();
-
 }
 
 //----------------------------------------------------------------------------
@@ -184,9 +178,13 @@ void sendPing()
   mqttClient.print("{ \"cmd\": \"ping\", \"value\":");
   mqttClient.print(gPingCount);
   mqttClient.print("}");
-  mqttClient.endMessage();
+  int returnValue = mqttClient.endMessage();
 
-  log_d("Sending ping=%d",gPingCount);
+  if(1 != returnValue)
+  {
+    mqttConnected = false;
+  }
+
   pingWatch.reset();
   gPingCount++;
 }
@@ -241,7 +239,12 @@ void sendError(char* command, char *message)
   mqttClient.print("\", \"data\": \"");
   mqttClient.print(message);
   mqttClient.print("\"}");
-  mqttClient.endMessage();
+  int returnValue = mqttClient.endMessage();
+
+  if(1 != returnValue)
+  {
+    mqttConnected = false;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -261,7 +264,12 @@ void sendSettings(char* setting, char *value)
   mqttClient.print("\", \"value\": \"");
   mqttClient.print(value);
   mqttClient.print("\"}");
-  mqttClient.endMessage();
+  int returnValue = mqttClient.endMessage();
+
+  if(1 != returnValue)
+  {
+    mqttConnected = false;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -281,7 +289,12 @@ void sendSettings(char* setting, uint16_t value)
   mqttClient.print("\", \"value\": \"");
   mqttClient.print(value);
   mqttClient.print("\"}");
-  mqttClient.endMessage();
+  int returnValue = mqttClient.endMessage();
+
+  if(1 != returnValue)
+  {
+    mqttConnected = false;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -301,7 +314,12 @@ void sendSettings(char* setting, uint32_t value)
   mqttClient.print("\", \"value\": \"");
   mqttClient.print(value);
   mqttClient.print("\"}");
-  mqttClient.endMessage();
+  int returnValue = mqttClient.endMessage();
+
+  if(1 != returnValue)
+  {
+    mqttConnected = false;
+  }
 }
 
 

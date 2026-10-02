@@ -17,6 +17,7 @@
 #include "settings.hpp"
 #include "stopWatch.hpp"
 #include "ota.hpp"
+#include "mqtt.hpp"
 
 #define BOARD_PIN        9
 #define BOARD_NUM_PIXELS 1
@@ -59,6 +60,30 @@ void setBoardPixel(uint32_t color)
       if(true == boardOn)
       {
         boardPixel.setPixelColor(0, RED);
+        boardPixel.show();  
+        boardBlink.set_time(1500);
+        boardBlink.reset();
+        boardOn = false;
+      }
+      else
+      {
+        boardPixel.setPixelColor(0, BLACK);
+        boardPixel.show();  
+        boardBlink.set_time(500);
+        boardBlink.reset();
+        boardOn = true;
+      }
+    }
+    return;
+  }
+
+  if(false == isMqttGood())
+  {
+    if(true == boardBlink.is_expired())
+    {
+      if(true == boardOn)
+      {
+        boardPixel.setPixelColor(0, YELLOW);
         boardPixel.show();  
         boardBlink.set_time(1500);
         boardBlink.reset();
