@@ -45,7 +45,7 @@ int gPingCount = 0;
 char lMqttBuffer[MAX_MQTT_PACKET];
 char lTopic[SIZE_OF_STRING];
 char lSubTopic[SIZE_OF_STRING];
-
+char lClientID[SIZE_OF_STRING];
 
 //----------------------------------------------------------------------------
 //  Purpose:
@@ -68,7 +68,8 @@ bool isMqttGood()
 //----------------------------------------------------------------------------
 void mqttInit()
 {
-  mqttClient.setId("clientId");
+  snprintf(lClientID,SIZE_OF_STRING,"cats-eyes-%d",getID());
+  mqttClient.setId(lClientID);
   Serial.print("Attempting to connect to the MQTT broker: ");
   Serial.println(getBroker());
 

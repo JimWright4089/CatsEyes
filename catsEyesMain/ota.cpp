@@ -68,7 +68,6 @@ void wifiInit(void)
 //----------------------------------------------------------------------------
 void otaInit(void)
 {
-
   snprintf(lName,SIZE_OF_STRING,"cats-eye-%d",getID());
   ArduinoOTA.setHostname(lName);
   ArduinoOTA.setPort(3232);
