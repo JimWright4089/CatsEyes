@@ -40,7 +40,7 @@ uint8_t gLastState=STATE_RUN;
 StopWatch eyesWork;
 StopWatch eyesTest;
 StopWatch lWifiSetup(10000);
-StopWatch nessDisplayWatch;
+StopWatch nessDisplayWatch(200);
 
 #ifdef ARDUINO_ARDUINO_NESSO_N1
 int mainButtonState = LOW;
@@ -556,13 +556,13 @@ void nessDisplayTask(void * pvParameters)
           switch(gEyeState[i])
           {
             case EYE_CLOSED:
-              gTextBuffer[i] = '0';
+              gTextBuffer[i] = '.';
               break;
             case EYE_OPEN:
-              gTextBuffer[i] = '1';
+              gTextBuffer[i] = getColorLetter(gEyeColor[i]);
               break;
             case EYE_BLINK:
-              gTextBuffer[i] = '2';
+              gTextBuffer[i] = '-';
               break;
             default:
               gTextBuffer[i] = '?';

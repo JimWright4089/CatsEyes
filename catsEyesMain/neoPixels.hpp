@@ -43,6 +43,7 @@ void setBoardPixel(uint32_t color);
 void setEyeColor(uint16_t number, uint32_t color);
 void showEyes();
 const char* getColorName(uint32_t color);
+char getColorLetter(uint32_t color);
 const char* getStateName(uint8_t state);
 
 #ifdef ARDUINO_ARDUINO_NESSO_N1

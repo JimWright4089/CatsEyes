@@ -55,7 +55,7 @@ char lSsid[SIZE_OF_STRING];
 char lPassword[SIZE_OF_STRING];
 char lBroker[SIZE_OF_BROKER_ADDRESS];
 uint8_t lLedState = STATE_RUN;
-uint16_t lEyeOpenCount        = 100;
+uint16_t lEyeOpenCount        = 110;
 uint16_t lEyeCloseCount       = 100;
 uint16_t lEyeBlinkCount       = 50;
 uint32_t lEyeBlinkLockoutTime = 20000;

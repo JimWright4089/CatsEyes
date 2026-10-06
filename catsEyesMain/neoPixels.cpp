@@ -226,6 +226,40 @@ const char* getColorName(uint32_t color)
 
 //----------------------------------------------------------------------------
 //  Purpose:
+//   Convert a numeric color value to a human-readable name.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
+char getColorLetter(uint32_t color)
+{
+  switch(color)
+  {
+    case BLACK:
+      return ' ';
+    case RED:
+      return 'R';
+    case GREEN:
+      return 'G';
+    case BLUE:
+      return 'B';
+    case YELLOW:
+      return 'Y';
+    case MAGENTA:
+      return 'M';
+    case CYAN:
+      return 'C';
+    case ORANGE:
+      return 'O';
+    case WHITE:
+      return 'W';
+    default:
+      return 'U';
+  }
+}
+
+//----------------------------------------------------------------------------
+//  Purpose:
 //   Convert a numeric eye state value to a readable label.
 //
 //  Notes:
