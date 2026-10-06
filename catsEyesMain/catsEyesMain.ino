@@ -466,6 +466,7 @@ void nessDisplayTask(void * pvParameters)
       dumpSettings();
       ESP.restart();
       drawNow=true;
+      nessDisplay.fillScreen(TFT_BLACK);
     }
 
     if((HIGH == mainButtonState)
@@ -473,6 +474,7 @@ void nessDisplayTask(void * pvParameters)
       &&(false==mainButtonHandled))
     {
       drawNow=true;
+      nessDisplay.fillScreen(TFT_BLACK);
       mainButtonHandled = true;
       switch(getState())
       {
@@ -494,8 +496,6 @@ void nessDisplayTask(void * pvParameters)
     if((true == nessDisplayWatch.is_expired())||(true==drawNow))
     {
       drawNow=false;
-      // Clear the screen and draw the string
-      nessDisplay.fillScreen(TFT_BLACK);
       nessDisplay.setTextColor(TFT_WHITE, TFT_BLACK);
       snprintf(gTextBuffer, cMaxBuffer, "Cats Eyes ID:%d", getID());
       nessDisplay.drawString(gTextBuffer, 1, 1);
@@ -585,7 +585,9 @@ void nessDisplayTask(void * pvParameters)
         {
           nessDisplay.setTextColor(getDisplayColor(gEyeColor[0]), TFT_BLACK);
         }
-        nessDisplay.drawString(getColorName(gEyeColor[0]), 1, 100);
+
+        snprintf(gTextBuffer, cMaxBuffer, "color:%s                  ", getColorName(gEyeColor[0]));
+        nessDisplay.drawString(gTextBuffer, 1, 100);
       }
 
       nessDisplayWatch.reset();
