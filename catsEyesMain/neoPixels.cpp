@@ -22,7 +22,12 @@
 #define BOARD_PIN        9
 #define BOARD_NUM_PIXELS 1
 
+#ifdef ARDUINO_ARDUINO_NESSO_N1
+#define EYE_PIN          7
+#else
 #define EYE_PIN          8
+#endif
+
 #define EYE_NUM_PIXELS  (NUM_OF_EYES * 2)
 #define PIXELS_PER_EYE   2
 
@@ -244,3 +249,56 @@ const char* getStateName(uint8_t state)
       return "unknown";
   }
 }
+
+#ifdef ARDUINO_ARDUINO_NESSO_N1
+int getDisplayColor(uint32_t color)
+{
+    if(BLACK == color)
+    {
+      return TFT_BLACK;
+    }
+
+    if(RED == color)
+    {
+      return TFT_RED;
+    }
+
+    if(GREEN == color)
+    {
+      return TFT_GREEN;
+    }
+
+    if(BLUE == color)
+    {
+      return TFT_BLUE;
+    }
+
+    if(YELLOW == color)
+    {
+      return TFT_YELLOW;
+    }
+
+    if(MAGENTA == color)
+    {
+      return TFT_MAGENTA;
+    }
+
+    if(CYAN == color)
+    {
+      return TFT_CYAN;
+    }
+
+    if(ORANGE == color)
+    {
+      return TFT_ORANGE;
+    }
+
+    if(WHITE == color)
+    {
+      return TFT_WHITE;
+    }
+    
+    return TFT_SALMON;
+}
+#endif
+

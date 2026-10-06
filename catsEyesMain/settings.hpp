@@ -32,6 +32,7 @@ void setSetting(char* message);
 void setField(String field, JSONVar data);
 
 void setState(String state);
+void setState(uint8_t state);
 uint8_t getState();
 void setSsid(char* ssid);
 char* getSsid();

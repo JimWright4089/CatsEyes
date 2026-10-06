@@ -14,6 +14,10 @@
 //----------------------------------------------------------------------------
 //  Includes
 //----------------------------------------------------------------------------
+#ifdef ARDUINO_ARDUINO_NESSO_N1
+#include <Arduino_Nesso_N1.h>
+#endif
+
 #include <Adafruit_NeoPixel.h>
 
 #define BLACK   0x00000000
@@ -40,5 +44,9 @@ void setEyeColor(uint16_t number, uint32_t color);
 void showEyes();
 const char* getColorName(uint32_t color);
 const char* getStateName(uint8_t state);
+
+#ifdef ARDUINO_ARDUINO_NESSO_N1
+int getDisplayColor(uint32_t color);
+#endif
 
 #endif NEO_PIXEL_H

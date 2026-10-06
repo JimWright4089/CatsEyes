@@ -385,6 +385,18 @@ void setState(String state)
 //  Notes:
 //
 //----------------------------------------------------------------------------
+void setState(uint8_t state)
+{
+  lLedState = state;  
+}
+
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return the current operating state of the device.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
 uint8_t getState()
 {
   return lLedState;

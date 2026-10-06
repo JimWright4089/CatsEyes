@@ -12,6 +12,11 @@
 //----------------------------------------------------------------------------
 //  Includes
 //----------------------------------------------------------------------------
+#ifdef ARDUINO_ARDUINO_NESSO_N1
+#include <Arduino_Nesso_N1.h>
+#endif
+#include <Debounce.h>
+
 #include "settings.hpp"
 #include "versions.hpp"
 #include "neoPixels.hpp"
@@ -35,6 +40,21 @@ uint8_t gLastState=STATE_RUN;
 StopWatch eyesWork;
 StopWatch eyesTest;
 StopWatch lWifiSetup(10000);
+StopWatch nessDisplayWatch;
+
+#ifdef ARDUINO_ARDUINO_NESSO_N1
+int mainButtonState = LOW;
+uint64_t mainButtonTime = 0;
+const int SIMPLE_PUSH_TIME = 400;
+const int RESET_PUSH_TIME = 5000;
+bool mainButtonHandled=true;
+bool drawNow=false;
+
+NessoDisplay nessDisplay; // Create a display instance
+const int cMaxBuffer=100;
+char gTextBuffer[cMaxBuffer];
+void nessDisplayTask(void * pvParameters);
+#endif
 
 //----------------------------------------------------------------------------
 //  Purpose:
@@ -90,7 +110,11 @@ void ledTask(void * pvParameters)
 //----------------------------------------------------------------------------
 void setup() 
 {
+#ifdef ARDUINO_ARDUINO_NESSO_N1
+  randomSeed(analogRead(GROVE_IO_0));
+#else
   randomSeed(analogRead(A0));
+#endif
   //Initialize serial and wait for port to open:
   Serial.begin(115200);
   initPixels();
@@ -106,6 +130,12 @@ void setup()
   log_i("Starting Cats Eyes");
   delay(1000);
 
+  initSettings();
+
+  clearEyes();
+  showEyes();
+  eyesTest.set_time(10000);
+
   xTaskCreatePinnedToCore(
       ledTask,   /* Function to implement the task */
       "LedTask",     /* Name of the task */
@@ -116,13 +146,32 @@ void setup()
       0            /* Core where the task should run (0 or 1) */
     );  
 
-  initSettings();
+#ifdef ARDUINO_ARDUINO_NESSO_N1
+  nessDisplay.begin();
+  nessDisplay.setRotation(1); // Set to landscape mode
+
+  // Set text properties
+  nessDisplay.setTextDatum(TL_DATUM); // Middle-Center datum for text alignment
+  nessDisplay.setTextColor(TFT_WHITE, TFT_BLACK); // White text, black background
+  nessDisplay.setTextSize(2);
+
+  pinMode(KEY1, INPUT_PULLUP);
+  mainButtonState = digitalRead(KEY1);
+
+  xTaskCreatePinnedToCore(
+      nessDisplayTask,   /* Function to implement the task */
+      "nesso display",     /* Name of the task */
+      10000,       /* Stack size in words */
+      NULL,        /* Task input parameter */
+      1,           /* Priority of the task */
+      NULL,        /* Task handle */
+      0            /* Core where the task should run (0 or 1) */
+    );  
+#endif
+
   wifiInit();
   mqttInit();
 
-  clearEyes();
-  showEyes();
-  eyesTest.set_time(10000);
 }
 
 //----------------------------------------------------------------------------
@@ -378,3 +427,170 @@ void clearEyes()
     setEyeColor(i, gEyeColor[i]);
   }
 }
+
+#ifdef ARDUINO_ARDUINO_NESSO_N1
+//----------------------------------------------------------------------------
+//  Purpose:
+//   LED Task
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
+void nessDisplayTask(void * pvParameters) 
+{
+  while(true) 
+  {
+
+  /*
+    Serial.print(digitalRead(KEY1));
+    Serial.print(" ");
+    Serial.print(mainButtonHandled);
+    Serial.print(" ");
+    Serial.println((nessDisplayWatch.now()-mainButtonTime));
+  */
+
+    if (digitalRead(KEY1) != mainButtonState) 
+    {
+      mainButtonState = digitalRead(KEY1);
+      mainButtonTime = nessDisplayWatch.now();
+      mainButtonHandled=false;
+    }
+
+    if((LOW == mainButtonState)
+        &&((nessDisplayWatch.now()-mainButtonTime)>RESET_PUSH_TIME)
+        &&(false==mainButtonHandled))
+    {
+      mainButtonHandled = true;
+      log_w("Ressetting flash");
+      clearSettings();
+      dumpSettings();
+      ESP.restart();
+      drawNow=true;
+    }
+
+    if((HIGH == mainButtonState)
+      &&((nessDisplayWatch.now()-mainButtonTime)>SIMPLE_PUSH_TIME)
+      &&(false==mainButtonHandled))
+    {
+      drawNow=true;
+      mainButtonHandled = true;
+      switch(getState())
+      {
+        case STATE_RUN:
+          setState(STATE_TEST);
+          log_i("Changing to test");
+          break;
+        case STATE_TEST:
+          setState(STATE_OFF);
+          log_i("Changing to off");
+          break;
+        default:
+          setState(STATE_RUN);
+          log_i("Changing to run");
+          break;
+      }
+    }
+
+    if((true == nessDisplayWatch.is_expired())||(true==drawNow))
+    {
+      drawNow=false;
+      // Clear the screen and draw the string
+      nessDisplay.fillScreen(TFT_BLACK);
+      nessDisplay.setTextColor(TFT_WHITE, TFT_BLACK);
+      snprintf(gTextBuffer, cMaxBuffer, "Cats Eyes ID:%d", getID());
+      nessDisplay.drawString(gTextBuffer, 1, 1);
+  
+      nessDisplay.setTextColor(TFT_WHITE, TFT_BLACK);
+      snprintf(gTextBuffer, cMaxBuffer, "ver:%d.%d", APP_VERSION_MAJOR, APP_VERSION_MINOR);
+      nessDisplay.drawString(gTextBuffer, 1, 20);
+
+      snprintf(gTextBuffer, cMaxBuffer, "ssid:%s", getSsid());
+      if(true == isWifiGood())
+      {
+        nessDisplay.setTextColor(TFT_GREEN, TFT_BLACK);
+      }
+      else
+      {
+        nessDisplay.setTextColor(TFT_RED, TFT_BLACK);
+      }
+      nessDisplay.drawString(gTextBuffer, 1, 40);
+
+      snprintf(gTextBuffer, cMaxBuffer, "mqtt:%s", getBroker());
+      if(true == isMqttGood())
+      {
+        nessDisplay.setTextColor(TFT_GREEN, TFT_BLACK);
+      }
+      else
+      {
+        nessDisplay.setTextColor(TFT_RED, TFT_BLACK);
+      }
+      nessDisplay.drawString(gTextBuffer, 1, 60);
+
+      nessDisplay.setTextColor(TFT_WHITE, TFT_BLACK);
+      nessDisplay.drawString("State:", 1, 80);
+
+      switch(getState())
+      {
+        case STATE_RUN:
+          nessDisplay.setTextColor(TFT_GREEN, TFT_BLACK);
+          nessDisplay.drawString("Run", 80, 80);
+          break;
+        case STATE_TEST:
+          nessDisplay.setTextColor(TFT_CYAN, TFT_BLACK);
+          nessDisplay.drawString("TEST", 80, 80);
+          break;
+        case STATE_OFF:
+          nessDisplay.setTextColor(TFT_WHITE, TFT_BLACK);
+          nessDisplay.drawString("OFF", 80, 80);
+          break;
+        default:
+          nessDisplay.setTextColor(TFT_RED, TFT_BLACK);
+          nessDisplay.drawString("UNKNOWN", 80, 80);
+          break;
+      }
+
+      if(STATE_RUN == getState())
+      {
+        for(int i=0;i<NUM_OF_EYES;i++)
+        {
+          switch(gEyeState[i])
+          {
+            case EYE_CLOSED:
+              gTextBuffer[i] = '0';
+              break;
+            case EYE_OPEN:
+              gTextBuffer[i] = '1';
+              break;
+            case EYE_BLINK:
+              gTextBuffer[i] = '2';
+              break;
+            default:
+              gTextBuffer[i] = '?';
+              break;
+
+          }
+        }
+        gTextBuffer[NUM_OF_EYES] = 0x00;
+        nessDisplay.setTextColor(TFT_ORANGE, TFT_BLACK);
+        nessDisplay.drawString(gTextBuffer, 1, 100);
+      }
+
+      if(STATE_TEST == getState())
+      {
+        if(TFT_BLACK == getDisplayColor(gEyeColor[0]))
+        {
+          nessDisplay.setTextColor(TFT_BLACK, TFT_WHITE);
+        }
+        else
+        {
+          nessDisplay.setTextColor(getDisplayColor(gEyeColor[0]), TFT_BLACK);
+        }
+        nessDisplay.drawString(getColorName(gEyeColor[0]), 1, 100);
+      }
+
+      nessDisplayWatch.reset();
+    }
+  }
+}
+#endif
+
