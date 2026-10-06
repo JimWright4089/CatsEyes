@@ -41,7 +41,7 @@ StopWatch eyesWork;
 StopWatch eyesTest;
 StopWatch lWifiSetup(10000);
 StopWatch nessDisplayWatch(200);
-StopWatch lRandSeedSave(10000);
+StopWatch lRandSeedSave(1080000);
 
 #ifdef ARDUINO_ARDUINO_NESSO_N1
 int mainButtonState = LOW;
