@@ -36,6 +36,7 @@ const uint16_t LOC_EYE_OPEN       = LOC_BROKER_ADDRESS_OF_MQTT + SIZE_OF_BROKER_
 const uint16_t LOC_EYE_CLOSE      = LOC_EYE_OPEN + SIZE_OF_SHORT;
 const uint16_t LOC_EYE_BLINK      = LOC_EYE_CLOSE + SIZE_OF_SHORT;
 const uint16_t LOC_EYE_BLINK_TIME = LOC_EYE_BLINK + SIZE_OF_SHORT;
+const uint16_t LOC_RANDOM         = SIZE_OF_FLASH;
 
 const uint16_t DEFAULT_ID   = 0xFFFF;
 const char* DEFAULT_SSID = "provisioner";
@@ -583,3 +584,31 @@ uint32_t getEyeBlinkLockoutTime()
 {
   return lEyeBlinkLockoutTime;
 }
+
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return the configured blink lockout time.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
+void setRandSeed(uint16_t num)
+{
+  EEPROM.writeBytes(LOC_RANDOM, &num, sizeof(uint16_t));
+  commitEeprom();
+}
+
+//----------------------------------------------------------------------------
+//  Purpose:
+//   Return the configured blink lockout time.
+//
+//  Notes:
+//
+//----------------------------------------------------------------------------
+uint16_t getRandSeed()
+{
+  uint16_t num;
+  int length = EEPROM.readBytes(LOC_RANDOM, &num, sizeof(uint16_t));
+  return num;
+}
+

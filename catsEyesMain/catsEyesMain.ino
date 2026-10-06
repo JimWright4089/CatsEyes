@@ -41,6 +41,7 @@ StopWatch eyesWork;
 StopWatch eyesTest;
 StopWatch lWifiSetup(10000);
 StopWatch nessDisplayWatch(200);
+StopWatch lRandSeedSave(10000);
 
 #ifdef ARDUINO_ARDUINO_NESSO_N1
 int mainButtonState = LOW;
@@ -67,6 +68,12 @@ void ledTask(void * pvParameters)
 {
   while(true) 
   {
+    if(true == lRandSeedSave.is_expired())
+    {
+      setRandSeed(random(0, 0xFFFF));
+      lRandSeedSave.reset();
+    }
+
     setBoardPixel(BOARD_COLOR);
     if(true == eyesWork.is_expired())
     {
@@ -110,11 +117,6 @@ void ledTask(void * pvParameters)
 //----------------------------------------------------------------------------
 void setup() 
 {
-#ifdef ARDUINO_ARDUINO_NESSO_N1
-  randomSeed(analogRead(GROVE_IO_0));
-#else
-  randomSeed(analogRead(A0));
-#endif
   //Initialize serial and wait for port to open:
   Serial.begin(115200);
   initPixels();
@@ -131,6 +133,7 @@ void setup()
   delay(1000);
 
   initSettings();
+  randomSeed(getRandSeed());
 
   clearEyes();
   showEyes();

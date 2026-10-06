@@ -31,6 +31,9 @@ void commitEeprom();
 void setSetting(char* message);
 void setField(String field, JSONVar data);
 
+void setRandSeed(uint16_t num);
+uint16_t getRandSeed();
+
 void setState(String state);
 void setState(uint8_t state);
 uint8_t getState();
